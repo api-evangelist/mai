@@ -1,0 +1,22 @@
+generated: '2026-07-20'
+method: searched
+source: https://www.mai.co/ footer "Website Security Commits"
+url: https://mai-unbound.secureframetrust.com/
+platform: Secureframe Trust
+description: >-
+  MAI (MAI Unbound, Inc.) publishes a Secureframe-hosted Trust Center covering
+  its security and compliance posture, with continuous control monitoring and a
+  confidential reporting channel available to internal personnel and external
+  parties. No specific certifications (e.g. SOC 2, ISO 27001) are listed on the
+  public landing view without requesting access; none are asserted here.
+certifications: []
+notes:
+  - Confidential reporting channel referenced for security and other concerns.
+  - Named certifications require access request via the trust portal; not captured to avoid fabrication.
+evidence:
+  - source: https://www.mai.co/
+    kind: footer-link
+    keywords: [website security commits, secureframe]
+  - source: https://mai-unbound.secureframetrust.com/
+    kind: trust-center
+    keywords: [trust center, continuous monitoring, confidential reporting channel]
