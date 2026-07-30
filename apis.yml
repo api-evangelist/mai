@@ -1,8 +1,6 @@
 aid: mai
 name: MAI
-description: 'MAI is a company surfaced as a portfolio company of kleiner-perkins and added to the API
-  Evangelist network as a stub for enrichment. Sector: ai. This profile is a lead awaiting the enrichment
-  pipeline.'
+description: 'MAI is an AI performance-marketing platform that runs autonomous AI agents to create, monitor, and optimize digital advertising campaigns 24/7 on behalf of brands. Founded in December 2024 by former Google Ads and Instacart engineering leaders, MAI natively connects to a company''s advertising accounts and first-party data to deliver real-time performance analysis, attribution modeling, cross-channel budget allocation, automated campaign creation, and bid optimization. Its agents currently manage millions of dollars of Google Ads spend each month for e-commerce and consumer brands. MAI raised a $25M seed round led by Kleiner Perkins with participation from Gaorong Ventures and UpHonest Capital. MAI is a managed SaaS product accessed through its web application; it does not publish a public developer API.'
 url: https://raw.githubusercontent.com/api-evangelist/mai/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
@@ -10,15 +8,69 @@ x-backed-by:
 - kleiner-perkins
 x-tier: stub
 x-tier-reason: portfolio-lead
+accessModel:
+  pricing: unknown
+  onboarding: unknown
+  trial: false
+  try_now: false
+  public: false
+  label: Unknown
+  confidence: low
+  source: []
+  generated: '2026-07-22'
+  method: derived
+image: https://xqxhyvqndlcdmf5c.public.blob.vercel-storage.com/assets/images/website-preview.png
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-17'
+modified: '2026-07-20'
 tags:
 - Company
-- Ai
+- AI
+- Artificial Intelligence
+- Marketing
+- Advertising
+- Performance Marketing
+- AI Agents
+- Digital Advertising
+- MarTech
+- Google Ads
 apis: []
+common:
+- type: Website
+  url: https://www.mai.co/
+- type: About
+  url: https://www.mai.co/about
+- type: Pricing
+  url: https://www.mai.co/pricing
+- type: SignUp
+  url: https://www.mai.co/
+- type: FAQ
+  url: https://www.mai.co/faq
+- type: CaseStudies
+  url: https://www.mai.co/case-studies
+- type: TermsOfService
+  url: https://www.mai.co/terms-of-service
+- type: PrivacyPolicy
+  url: https://www.mai.co/privacy-policy
+- type: TrustCenter
+  url: https://mai-unbound.secureframetrust.com/
+- type: LinkedIn
+  url: https://www.linkedin.com/company/mai-agents/
+- type: Twitter
+  url: https://x.com/Mai_Agents
+- type: TrustCenter
+  name: MAI Trust Center
+  url: security/mai-trust-center.yml
+- type: DomainSecurity
+  name: MAI Domain Security
+  url: security/mai-domain-security.yml
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
+x-enrichment:
+  date: '2026-07-20'
+  status: minimal
+  artifacts_added: 2
+  pass: local-v1
