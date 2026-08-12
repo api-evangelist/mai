@@ -1,0 +1,314 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/api-evangelist/mai/refs/heads/main/json-schema/mai-pixel-event.schema.json",
+  "title": "MAI Pixel Event Payload",
+  "description": "Request body accepted by POST https://pixel.mai.co/api/collect. Transcribed from the first-party TypeScript declarations published in npm @mai-co/pixel@1.0.5 (dist/types.d.ts, interface EventPayload) and the event parameter interfaces in the same file. MAI publishes no OpenAPI or JSON Schema of its own; this is an API Evangelist transcription of MAI's own published types, not a MAI artifact.",
+  "x-provenance": {
+    "generated": "2026-08-12",
+    "method": "derived",
+    "source": "npm @mai-co/pixel@1.0.5 dist/types.d.ts",
+    "source_url": "https://registry.npmjs.org/@mai-co/pixel",
+    "endpoint": "POST https://pixel.mai.co/api/collect",
+    "content_type_on_the_wire": "text/plain (body is JSON)"
+  },
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_name",
+    "event_timestamp",
+    "seq",
+    "client_id",
+    "customer",
+    "shop",
+    "page",
+    "traffic",
+    "event_params",
+    "consent",
+    "pixel_version",
+    "sdk_type"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "UUID v4 generated per event, client-side. Serves as the de-duplication key across the SDK's 3-attempt retry ladder."
+    },
+    "event_name": {
+      "type": "string",
+      "description": "Name of the emitted event.",
+      "enum": [
+        "page_viewed",
+        "product_viewed",
+        "product_added_to_cart",
+        "product_removed_from_cart",
+        "cart_viewed",
+        "search_submitted",
+        "collection_viewed",
+        "checkout_started",
+        "checkout_completed",
+        "_customer_attributes_changed"
+      ]
+    },
+    "event_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of client-side emission."
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing sequence number within the session."
+    },
+    "client_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Anonymous client identifier; UUID v4 persisted in the _mai_cid cookie for 2 years."
+    },
+    "customer": {
+      "description": "Customer identity, null until MaiPixel('setCustomer', ...) is called.",
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/CustomerData" }
+      ]
+    },
+    "shop": {
+      "type": "object",
+      "description": "Shop context, sourced from MaiConfig.",
+      "properties": {
+        "name": { "type": "string", "description": "Shop display name (MaiConfig.shopName)." },
+        "myshopifyDomain": { "type": "string", "description": "Shopify domain, e.g. xxx.myshopify.com (MaiConfig.storeDomain). Identifies the tenant; not a credential." },
+        "countryCode": { "type": "string", "description": "ISO 3166 country code (MaiConfig.shopCountryCode)." },
+        "storefrontUrl": { "type": "string", "description": "Storefront URL (MaiConfig.storefrontUrl, else window.location.origin)." }
+      },
+      "required": ["name", "myshopifyDomain", "countryCode", "storefrontUrl"]
+    },
+    "page": {
+      "type": "object",
+      "description": "Page context, auto-collected from the browser.",
+      "properties": {
+        "href": { "type": "string", "description": "window.location.href" },
+        "title": { "type": "string", "description": "document.title" },
+        "referrer": { "type": "string", "description": "document.referrer" }
+      },
+      "required": ["href", "title", "referrer"]
+    },
+    "traffic": {
+      "type": "object",
+      "description": "UTM attribution, taken from the URL if present, otherwise from the mai_utm cookie (30-day window).",
+      "properties": {
+        "source": { "type": "string", "description": "utm_source" },
+        "medium": { "type": "string", "description": "utm_medium" },
+        "campaign": { "type": "string", "description": "utm_campaign" },
+        "content": { "type": "string", "description": "utm_content" },
+        "term": { "type": "string", "description": "utm_term" }
+      },
+      "required": ["source", "medium", "campaign", "content", "term"]
+    },
+    "event_params": {
+      "type": "object",
+      "description": "Flat key-value parameters for this event. The known shapes per event_name are given in $defs; arbitrary additional keys are explicitly permitted and are stored by MAI in a BigQuery event_params REPEATED RECORD.",
+      "additionalProperties": true
+    },
+    "items": {
+      "type": "array",
+      "description": "Line items. Present only for cart_viewed, search_submitted, collection_viewed, checkout_started and checkout_completed.",
+      "items": { "$ref": "#/$defs/ItemData" }
+    },
+    "consent": { "$ref": "#/$defs/ConsentData" },
+    "pixel_version": {
+      "type": "string",
+      "description": "SDK version string, formatted 'headless-<semver>', e.g. headless-1.0.5.",
+      "examples": ["headless-1.0.5"]
+    },
+    "sdk_type": {
+      "type": "string",
+      "const": "headless",
+      "description": "Always 'headless'. Distinguishes SDK events from MAI Web Pixel events."
+    },
+    "attribute_change": {
+      "type": "object",
+      "description": "Present only on _customer_attributes_changed events.",
+      "properties": {
+        "attribute_name": { "type": "string" },
+        "attribute_value": { "$ref": "#/$defs/ConsentData" }
+      },
+      "required": ["attribute_name", "attribute_value"]
+    }
+  },
+  "$defs": {
+    "CustomerData": {
+      "type": "object",
+      "description": "Set via MaiPixel('setCustomer', ...). MAI's guide recommends supplying at least email or phone, because the backend joins browse-stage UTM to checkout-stage orders on email.",
+      "properties": {
+        "id": { "type": "string", "description": "Customer ID from the merchant's system." },
+        "email": { "type": "string", "format": "email", "description": "Recommended for checkout attribution." },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "phone": { "type": "string", "description": "E.164 format." },
+        "ordersCount": { "type": "integer", "description": "Total orders placed by the customer." }
+      },
+      "additionalProperties": false
+    },
+    "ConsentData": {
+      "type": "object",
+      "description": "Privacy consent snapshot, aligned with the Shopify CustomerPrivacy API. Null means unset. Tracking is permitted by default when consent is never called.",
+      "properties": {
+        "analytics_processing_allowed": { "type": ["boolean", "null"], "description": "false stops the SDK from sending any events." },
+        "marketing_allowed": { "type": ["boolean", "null"] },
+        "preferences_processing_allowed": { "type": ["boolean", "null"] },
+        "sale_of_data_allowed": { "type": ["boolean", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "ItemData": {
+      "type": "object",
+      "description": "Line item used in cart_viewed, checkout, search and collection events.",
+      "properties": {
+        "item_id": { "type": "string", "description": "Product ID." },
+        "item_name": { "type": "string", "description": "Product name." },
+        "item_variant": { "type": "string", "description": "Variant name, e.g. 'Blue / Large'." },
+        "price": { "type": ["string", "number"], "description": "Line total for checkout items; unit price elsewhere." },
+        "unit_price": { "type": ["string", "number"], "description": "Unit price per item; checkout items only." },
+        "quantity": { "type": "integer" },
+        "cost": { "type": ["string", "number"], "description": "Line total cost; cart_viewed items only." },
+        "sku": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "ProductViewedParams": {
+      "type": "object",
+      "description": "event_params for product_viewed.",
+      "required": ["product_id", "product_variant_id"],
+      "properties": {
+        "product_id": { "type": "string" },
+        "product_variant_id": { "type": "string" },
+        "product_title": { "type": "string" },
+        "product_variant_title": { "type": "string" },
+        "price": { "type": ["string", "number"] },
+        "currency": { "type": "string", "description": "ISO 4217." },
+        "sku": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ProductAddedToCartParams": {
+      "type": "object",
+      "description": "event_params for product_added_to_cart.",
+      "required": ["product_id", "product_variant_id", "quantity"],
+      "properties": {
+        "product_id": { "type": "string" },
+        "product_variant_id": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "total_cost": { "type": ["string", "number"], "description": "Unit price x quantity." },
+        "product_title": { "type": "string" },
+        "product_variant_title": { "type": "string" },
+        "price": { "type": ["string", "number"] },
+        "currency": { "type": "string" },
+        "sku": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "ProductRemovedFromCartParams": {
+      "type": "object",
+      "description": "event_params for product_removed_from_cart.",
+      "required": ["product_id", "product_variant_id"],
+      "properties": {
+        "product_id": { "type": "string" },
+        "product_variant_id": { "type": "string" },
+        "quantity": { "type": "integer" },
+        "product_title": { "type": "string" },
+        "price": { "type": ["string", "number"] },
+        "currency": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "CartViewedParams": {
+      "type": "object",
+      "description": "event_params for cart_viewed. All fields optional.",
+      "properties": {
+        "cart_id": { "type": "string" },
+        "amount": { "type": ["string", "number"] },
+        "currency": { "type": "string" },
+        "total_quantity": { "type": "integer" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/ItemData" } }
+      },
+      "additionalProperties": true
+    },
+    "SearchSubmittedParams": {
+      "type": "object",
+      "description": "event_params for search_submitted. All fields optional.",
+      "properties": {
+        "query": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/ItemData" } }
+      },
+      "additionalProperties": true
+    },
+    "CollectionViewedParams": {
+      "type": "object",
+      "description": "event_params for collection_viewed. All fields optional.",
+      "properties": {
+        "collection_id": { "type": "string" },
+        "collection_title": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/ItemData" } }
+      },
+      "additionalProperties": true
+    },
+    "CheckoutParams": {
+      "type": "object",
+      "description": "event_params for checkout_started. Only needed for custom checkouts; Shopify-hosted checkout is tracked by the MAI Web Pixel automatically.",
+      "properties": {
+        "token": { "type": "string", "description": "Checkout session token." },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "first_name": { "type": "string" },
+        "last_name": { "type": "string" },
+        "address1": { "type": "string" },
+        "address2": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" },
+        "country_code": { "type": "string", "description": "ISO 3166." },
+        "province": { "type": "string" },
+        "province_code": { "type": "string" },
+        "zip": { "type": "string" },
+        "order_id": { "type": "string" },
+        "currency": { "type": "string", "description": "ISO 4217." },
+        "subtotal": { "type": ["string", "number"] },
+        "shipping": { "type": ["string", "number"] },
+        "tax": { "type": ["string", "number"] },
+        "value": { "type": ["string", "number"] },
+        "sms_marketing_phone": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/ItemData" } }
+      },
+      "additionalProperties": true
+    },
+    "CheckoutCompletedParams": {
+      "type": "object",
+      "description": "event_params for checkout_completed. Same shape as CheckoutParams, but order_id is required.",
+      "required": ["order_id"],
+      "properties": {
+        "order_id": { "type": "string" },
+        "token": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "first_name": { "type": "string" },
+        "last_name": { "type": "string" },
+        "address1": { "type": "string" },
+        "address2": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" },
+        "country_code": { "type": "string" },
+        "province": { "type": "string" },
+        "province_code": { "type": "string" },
+        "zip": { "type": "string" },
+        "currency": { "type": "string" },
+        "subtotal": { "type": ["string", "number"] },
+        "shipping": { "type": ["string", "number"] },
+        "tax": { "type": ["string", "number"] },
+        "value": { "type": ["string", "number"] },
+        "sms_marketing_phone": { "type": "string" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/ItemData" } }
+      },
+      "additionalProperties": true
+    }
+  }
+}

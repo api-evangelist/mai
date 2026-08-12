@@ -1,0 +1,113 @@
+# MAI
+
+> MAI (MAI Unbound, Inc.) is an AI performance-marketing platform that runs autonomous
+> agents to create, monitor and optimize digital advertising campaigns for e-commerce
+> brands. Its one publicly reachable API is the MAI Pixel Event Collection endpoint,
+> which ingests first-party commerce events from a merchant's storefront so MAI's
+> agents can attribute ad spend to revenue.
+
+Generated: 2026-08-12
+Method: generated
+Source: apis.yml plus the artifacts in this repository. MAI does not publish an
+llms.txt of its own — https://www.mai.co/llms.txt is intercepted by Vercel bot
+mitigation (HTTP 429) and https://pixel.mai.co/llms.txt returns 404.
+
+This file is published by API Evangelist as an independent third-party profile of
+MAI's public API surface. It is not a MAI document.
+
+## What MAI actually exposes
+
+MAI is primarily a managed SaaS product used through its web application and through
+two Shopify apps. It has no general-purpose developer platform: no developer portal,
+no API reference, no OpenAPI, no GraphQL, no MCP server, and no A2A agent card.
+
+There is exactly one public, callable, documented HTTP endpoint:
+
+- POST https://pixel.mai.co/api/collect — MAI Pixel Event Collection API.
+  Unauthenticated. Accepts a single JSON event document per call, sent as
+  Content-Type text/plain so the request stays a CORS simple request.
+  GET on the same path returns a liveness response: {"status":"ok","service":"pixel-api"}
+
+The contract for that endpoint is not published as a spec. It is published as
+TypeScript declarations inside MAI's own MIT-licensed npm package.
+
+## SDK
+
+- @mai-co/pixel (npm, v1.0.5, published 2026-05-07, MIT): https://www.npmjs.com/package/@mai-co/pixel
+  First-party — maintained by zilong.wang@mai.co and lei.peng@mai.co.
+  Client-side event tracking and UTM attribution for Shopify headless storefronts
+  (Hydrogen, Next.js, Gatsby, Nuxt). Ships complete TypeScript declarations for the
+  request envelope and every event parameter set.
+- CDN build: https://cdn.jsdelivr.net/npm/@mai-co/pixel@1/dist/mai-pixel.min.js
+  Note: MAI's documented script tag pins the major version only, so the served build
+  floats across 1.x.
+
+## Events
+
+Ten events are emitted to the collection endpoint. Two are required for MAI's
+attribution to work at all: setCustomer and page_viewed.
+
+- page_viewed — auto-fired at init; SPAs must re-fire on route change
+- product_viewed — requires product_id, product_variant_id
+- product_added_to_cart — requires product_id, product_variant_id, quantity
+- product_removed_from_cart — requires product_id, product_variant_id
+- cart_viewed — all fields optional
+- search_submitted — all fields optional
+- collection_viewed — all fields optional
+- checkout_started — custom checkouts only; Shopify-hosted checkout is covered by the MAI Web Pixel
+- checkout_completed — custom checkouts only; requires order_id
+- _customer_attributes_changed — internal, emitted on consent changes
+
+Commerce identifiers in the payload are Shopify GIDs (gid://shopify/Product/<n>),
+not MAI identifiers. MAI mints only event_id (UUID v4 per event) and client_id
+(UUID v4, persisted in the _mai_cid cookie for 2 years).
+
+## Runtime semantics an agent needs
+
+- Auth: none. The tenant is named in the body as a plaintext Shopify store domain.
+- Retries: XHR fallback only, 3 attempts, fixed 1s/2s/3s backoff. sendBeacon sends
+  are fire-and-forget and are never retried.
+- Payload ceiling: 64KB, above which sendBeacon is skipped for XHR.
+- Idempotency: not supported. event_id and seq exist and would let the server
+  de-duplicate, but no idempotency guarantee is published.
+- Errors: no published error catalog, no RFC 9457. The client branches on the
+  status code and never reads the response body.
+- Rate limits: none published, and no RateLimit-*/Retry-After headers are emitted
+  or honored.
+- Consent: four-flag model aligned with the Shopify Customer Privacy API. Tracking
+  is ALLOWED by default if consent is never set, and enforcement is client-side.
+- Bot suppression: a User-Agent regex silently drops events from ~27 named crawlers
+  plus generic bot/crawl/spider/scraper matches. HeadlessChrome and Lighthouse are
+  included, so synthetic monitoring produces nothing.
+
+## Repository artifacts
+
+- json-schema/mai-pixel-event.schema.json — the event envelope, transcribed from MAI's published types
+- data-model/mai-data-model.yml — entity graph and identifier conventions
+- authentication/mai-authentication.yml — the (absent) auth model
+- conventions/mai-conventions.yml — transport, retries, versioning, state, filtering
+- conformance/mai-conformance.yml — standards asserted and not asserted
+- lifecycle/mai-lifecycle.yml — versioning, releases, deprecation, status
+- plans/mai-plans-pricing.yml — Free and MAI Plus ($2,000/mo, up to $20,000 agent-managed spend)
+- rate-limits/mai-rate-limits.yml — recorded zero, with the reason
+- well-known/mai-well-known.yml — every /.well-known/ probe and its status
+- packages/mai-packages.yml — the SDK, with versions and dates
+- security/ — domain security probe and Secureframe trust center
+
+## Links
+
+- Website: https://www.mai.co/
+- Pricing: https://www.mai.co/pricing
+- Shopify app: https://apps.shopify.com/mai-marketing-ai-agents
+- GitHub organization: https://github.com/mai-co
+- npm SDK: https://www.npmjs.com/package/@mai-co/pixel
+- Trust center: https://mai-unbound.secureframetrust.com/
+- Terms: https://www.mai.co/terms-of-service
+- Privacy: https://www.mai.co/privacy-policy
+
+## Notes for crawlers and agents
+
+https://www.mai.co/ answers HTTP 429 with `x-vercel-mitigated: challenge` on every
+path, including /robots.txt. MAI's marketing site is therefore unreadable to
+automated clients as of 2026-08-12, and any description of it here is drawn from
+MAI's Shopify listing and npm package rather than from the site itself.

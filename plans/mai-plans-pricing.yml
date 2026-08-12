@@ -1,0 +1,82 @@
+generated: '2026-08-12'
+method: searched
+source: https://apps.shopify.com/mai-marketing-ai-agents
+docs: https://apps.shopify.com/mai-marketing-ai-agents
+note: >-
+  Pricing was read from MAI's Shopify App Store listing, which is where MAI
+  actually publishes tier and price. MAI's own pricing page at
+  https://www.mai.co/pricing could not be read on this pass — every path on
+  www.mai.co is intercepted by Vercel bot mitigation and answers HTTP 429 with
+  a challenge document rather than the page.
+currency: USD
+billing_period: monthly
+plan_count: 2
+plans:
+  - name: MAI
+    tier: free
+    price: 0
+    currency: USD
+    billing_period: monthly
+    trial: null
+    included:
+      - AI data scientist
+      - AI strategist for campaign growth
+      - AI marketing ops
+      - First-party Shopify pixel with advanced conversion tracking
+      - AI account audit with performance insights
+      - Live dashboards for every connected platform
+    limits:
+      agent_managed_ad_spend: 0
+      note: Autonomous agent management of ad spend is not included on the free tier.
+
+  - name: MAI Plus
+    tier: paid
+    price: 2000
+    currency: USD
+    billing_period: monthly
+    price_display: $2,000 / month
+    trial:
+      days: 14
+      type: free trial
+    included:
+      - Everything in the free plan
+      - Autonomous AI agents for ads management
+      - Dedicated client partner support
+    limits:
+      agent_managed_ad_spend_usd_max: 20000
+      agent_managed_ad_spend_display: Up to $20,000 ads spend owned by agents
+    overage:
+      published: false
+      note: >-
+        No overage rate is published for ad spend beyond the $20,000 ceiling; the
+        listing states the cap without saying what happens at it.
+
+api_pricing:
+  metered: false
+  note: >-
+    Neither tier prices API access. The Pixel Event Collection endpoint carries
+    no published quota, metering, or per-event cost — it is bundled with the
+    app.
+
+integrations_covered:
+  - Meta Ads
+  - Google Ads
+  - Google Analytics
+  - Google Merchant Center
+  - Microsoft Ads
+  - Shopify Checkout
+
+evidence:
+  - url: https://apps.shopify.com/mai-marketing-ai-agents
+    status: 200
+    fetched: '2026-08-12'
+  - url: https://apps.shopify.com/mai-google-ads-ai
+    status: 404
+    fetched: '2026-08-12'
+    note: >-
+      A second MAI listing ("MAI - Autonomous Marketing AI") surfaces in search
+      results but the listing URL now 404s — delisted or renamed.
+  - url: https://www.mai.co/pricing
+    status: 429
+    fetched: '2026-08-12'
+    note: Vercel bot-mitigation challenge; page not readable.

@@ -1,28 +1,39 @@
 aid: mai
 name: MAI
-description: 'MAI is an AI performance-marketing platform that runs autonomous AI agents to create, monitor, and optimize digital advertising campaigns 24/7 on behalf of brands. Founded in December 2024 by former Google Ads and Instacart engineering leaders, MAI natively connects to a company''s advertising accounts and first-party data to deliver real-time performance analysis, attribution modeling, cross-channel budget allocation, automated campaign creation, and bid optimization. Its agents currently manage millions of dollars of Google Ads spend each month for e-commerce and consumer brands. MAI raised a $25M seed round led by Kleiner Perkins with participation from Gaorong Ventures and UpHonest Capital. MAI is a managed SaaS product accessed through its web application; it does not publish a public developer API.'
+description: 'MAI is an AI performance-marketing platform that runs autonomous AI agents to create, monitor, and optimize digital advertising campaigns 24/7 on behalf of brands. Founded in December 2024 by former Google Ads and Instacart engineering leaders, MAI natively connects to a company''s advertising accounts and first-party data to deliver real-time performance analysis, attribution modeling, cross-channel budget allocation, automated campaign creation, and bid optimization. Its agents currently manage millions of dollars of Google Ads spend each month for e-commerce and consumer brands. MAI raised a $25M seed round led by Kleiner Perkins with participation from Gaorong Ventures and UpHonest Capital. MAI is delivered mainly as a managed SaaS product and as a Shopify app, and it has no general-purpose developer platform — no developer portal, API reference, OpenAPI, GraphQL or MCP server. It does publish one public, callable API: the MAI Pixel Event Collection endpoint at https://pixel.mai.co/api/collect, which ingests first-party commerce events from a merchant storefront so MAI''s agents can attribute ad spend to revenue. Its contract is published not as a specification but as first-party TypeScript declarations inside MAI''s MIT-licensed @mai-co/pixel SDK on npm.'
 url: https://raw.githubusercontent.com/api-evangelist/mai/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
 x-backed-by:
 - kleiner-perkins
-x-tier: stub
-x-tier-reason: portfolio-lead
+x-tier: enriched
+x-tier-reason: >-
+  Promoted from stub on 2026-08-12. Contract discovery found a real first-party
+  API surface the previous pass had missed: the @mai-co/pixel SDK on npm and the
+  live MAI Pixel Event Collection endpoint at https://pixel.mai.co/api/collect.
 accessModel:
-  pricing: unknown
-  onboarding: unknown
-  trial: false
+  pricing: freemium
+  onboarding: self-service
+  trial: true
+  trial_days: 14
   try_now: false
   public: false
-  label: Unknown
-  confidence: low
-  source: []
-  generated: '2026-07-22'
-  method: derived
+  label: Freemium
+  confidence: medium
+  source:
+  - https://apps.shopify.com/mai-marketing-ai-agents
+  generated: '2026-08-12'
+  method: searched
+  note: >-
+    Free tier plus MAI Plus at $2,000/month with a 14-day trial, read from MAI's
+    Shopify App Store listing. Marked not-public because the product is reached
+    by installing the Shopify app or contacting MAI, not by self-serve API keys;
+    the Pixel collection endpoint itself is unauthenticated but is not offered as
+    a general-purpose developer API. See plans/mai-plans-pricing.yml.
 image: https://xqxhyvqndlcdmf5c.public.blob.vercel-storage.com/assets/images/website-preview.png
 specificationVersion: '0.20'
 created: '2026-07-17'
-modified: '2026-07-20'
+modified: '2026-08-12'
 tags:
 - Company
 - AI
@@ -34,7 +45,53 @@ tags:
 - Digital Advertising
 - MarTech
 - Google Ads
-apis: []
+- Shopify
+- E-Commerce
+- Attribution
+- Analytics
+- Event Tracking
+apis:
+- name: MAI Pixel Event Collection API
+  description: >-
+    The one public, callable API MAI publishes. A single unauthenticated
+    write-only endpoint, POST /api/collect, that ingests first-party commerce
+    events from a merchant's storefront — product views, cart activity, search,
+    collection views and checkout — together with UTM attribution, so MAI's
+    autonomous advertising agents can tie ad spend to revenue. Ten events are
+    defined. Commerce identifiers in the payload are Shopify GIDs rather than
+    MAI identifiers. MAI publishes no OpenAPI for this endpoint; the contract is
+    published as first-party TypeScript declarations inside the MIT-licensed
+    @mai-co/pixel npm package, from which the JSON Schema in this repository was
+    transcribed.
+  humanURL: https://www.npmjs.com/package/@mai-co/pixel
+  baseURL: https://pixel.mai.co
+  tags:
+  - Event Tracking
+  - Attribution
+  - Analytics
+  - E-Commerce
+  - Shopify
+  properties:
+  - type: Documentation
+    name: MAI Pixel SDK integration guide
+    url: https://www.npmjs.com/package/@mai-co/pixel
+  - type: JSONSchema
+    name: MAI Pixel Event Payload schema
+    url: json-schema/mai-pixel-event.schema.json
+  - type: SourceCode
+    name: MAI on GitHub
+    url: https://github.com/mai-co
+  x-base-url-evidence:
+    source: npm @mai-co/pixel@1.0.5 dist/mai-pixel.es.js
+    detail: >-
+      The shipped bundle hardcodes https://pixel.mai.co as the default
+      apiEndpoint and appends /api/collect in its transport module.
+    probed:
+      url: https://pixel.mai.co/api/collect
+      method: GET
+      http_status: 200
+      body: '{"status":"ok","service":"pixel-api"}'
+      fetched: '2026-08-12'
 common:
 - type: Website
   url: https://www.mai.co/
@@ -64,13 +121,52 @@ common:
 - type: DomainSecurity
   name: MAI Domain Security
   url: security/mai-domain-security.yml
+- type: GitHubOrganization
+  name: MAI on GitHub
+  url: https://github.com/mai-co
+- type: Support
+  name: MAI app support (Shopify App Store)
+  url: https://apps.shopify.com/mai-marketing-ai-agents
+- type: Packages
+  name: MAI Packages
+  url: packages/mai-packages.yml
+- type: SDKs
+  name: MAI SDKs
+  url: packages/mai-packages.yml
+- type: JSONSchema
+  name: MAI Pixel Event Payload Schema
+  url: json-schema/mai-pixel-event.schema.json
+- type: Authentication
+  name: MAI Authentication
+  url: authentication/mai-authentication.yml
+- type: Conventions
+  name: MAI API Conventions
+  url: conventions/mai-conventions.yml
+- type: DataModel
+  name: MAI Data Model
+  url: data-model/mai-data-model.yml
+- type: Conformance
+  name: MAI Conformance
+  url: conformance/mai-conformance.yml
+- type: Lifecycle
+  name: MAI Lifecycle
+  url: lifecycle/mai-lifecycle.yml
+- type: Plans
+  name: MAI Plans and Pricing
+  url: plans/mai-plans-pricing.yml
+- type: RateLimits
+  name: MAI Rate Limits
+  url: rate-limits/mai-rate-limits.yml
+- type: LLMsTxt
+  name: MAI llms.txt
+  url: llms/mai-llms.txt
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
 - FN: APIs.json
   email: info@apis.io
 x-enrichment:
-  date: '2026-07-20'
-  status: minimal
-  artifacts_added: 2
+  date: '2026-08-12'
+  status: enriched
+  artifacts_added: 11
   pass: local-v1

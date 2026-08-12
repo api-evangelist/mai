@@ -1,0 +1,61 @@
+generated: '2026-08-12'
+method: searched
+source: >-
+  Searched MAI's published developer surface — the @mai-co/pixel npm README,
+  the shipped SDK bundle, and the Shopify App Store listing. No rate limits are
+  documented anywhere.
+docs: null
+limit_count: 0
+summary: >-
+  MAI publishes no rate limits for the Pixel Event Collection API, and the
+  client it ships does not read any rate-limit signal off the response. An
+  integrator has no published number to design against and no runtime header to
+  react to.
+limits: []
+
+response_headers:
+  documented: []
+  observed: []
+  note: >-
+    A live GET https://pixel.mai.co/api/collect (200, health response) returned
+    only content-type, vary, date and server: Google Frontend — no RateLimit-*,
+    no X-RateLimit-*, no Retry-After. The POST path was not exercised: sending
+    a synthetic event would write fabricated data into a production analytics
+    pipeline, which this pipeline does not do.
+
+exhaustion_behavior:
+  status_code: undocumented
+  client_handling: >-
+    The SDK treats every non-2xx identically. A 429 would enter the same fixed
+    retry ladder as any other failure — 3 attempts at 1s, 2s, 3s — and any
+    Retry-After the server sent would be ignored, because the client never reads
+    response headers or body. After the third failure the event is dropped
+    silently.
+  see: conventions/mai-conventions.yml
+
+client_side_throttling:
+  payload_ceiling_bytes: 65536
+  payload_ceiling_note: >-
+    Not a rate limit, but the one hard client-side ceiling in the contract:
+    payloads at or above 64KB cannot use navigator.sendBeacon and fall back to
+    XHR.
+  bot_suppression: >-
+    A User-Agent regex suppresses events entirely for ~27 named crawlers plus
+    generic bot/crawl/spider/scraper substrings. This reduces volume at the
+    source rather than limiting it at the edge.
+
+evidence:
+  - url: https://pixel.mai.co/api/collect
+    status: 200
+    fetched: '2026-08-12'
+    note: 'GET health response {"status":"ok","service":"pixel-api"}; no rate-limit headers present.'
+  - url: https://www.npmjs.com/package/@mai-co/pixel
+    status: 200
+    fetched: '2026-08-12'
+    note: Full integration guide; contains no rate-limit section.
+
+remedy: >-
+  Publish a per-store event ceiling and emit RateLimit-Limit / RateLimit-Remaining
+  / RateLimit-Reset (or Retry-After on 429) from the collector, then teach the
+  SDK to honor Retry-After instead of its fixed 1s/2s/3s ladder. A high-traffic
+  storefront currently has no way to know it is being shed.

@@ -1,0 +1,173 @@
+generated: '2026-08-12'
+method: derived
+source: >-
+  npm @mai-co/pixel@1.0.5 — dist/mai-pixel.es.js (src/transport.ts, src/config.ts,
+  src/client-id.ts, src/bot.ts, src/utm.ts as emitted), dist/types.d.ts,
+  and the published README integration guide
+docs: https://www.npmjs.com/package/@mai-co/pixel
+scope: >-
+  Cross-cutting runtime semantics of the MAI Pixel Event Collection API, read
+  out of MAI's own published SDK. MAI publishes no HTTP reference for this
+  endpoint; everything below is observable in the shipped, MIT-licensed bundle.
+
+auth:
+  style: none
+  detail: Unauthenticated. See authentication/mai-authentication.yml.
+
+transport:
+  protocol: HTTPS
+  method: POST
+  path: /api/collect
+  base_url: https://pixel.mai.co
+  content_type: text/plain
+  content_type_note: >-
+    The body is JSON but is sent as text/plain, deliberately, so the request
+    stays a CORS "simple request" and skips the OPTIONS preflight. Consumers
+    parsing by Content-Type will mis-type it.
+  primary_mechanism: navigator.sendBeacon
+  fallback_mechanism: XMLHttpRequest POST
+  beacon_size_limit_bytes: 65536
+  beacon_size_note: >-
+    Payloads at or above 64KB, or a sendBeacon that returns false, fall through
+    to the XHR path. Item-heavy collection_viewed / cart_viewed events are the
+    realistic way to cross that line.
+
+retries:
+  supported: true
+  applies_to: XHR fallback path only
+  max_attempts: 3
+  success_condition: HTTP status >= 200 and < 300
+  retry_condition: any non-2xx status, or transport failure
+  backoff: linear
+  backoff_schedule_ms: [1000, 2000, 3000]
+  note: >-
+    Beacon sends are fire-and-forget and are never retried — a dropped beacon is
+    silently lost. After 3 failed XHR attempts the event is discarded with only
+    a debug-log line.
+
+idempotency:
+  header: null
+  supported: false
+  dedup_key: event_id
+  dedup_key_format: UUID v4, generated per event, client-side
+  ordering_key: seq
+  ordering_key_format: monotonically increasing integer within the session
+  assessment: >-
+    NOT an idempotency guarantee. Every event carries a unique event_id and a
+    monotonic seq, which give the server everything it needs to de-duplicate the
+    3-attempt retry, and that is plainly what they are for. But MAI publishes no
+    statement that a replayed event_id is collapsed rather than double-counted,
+    the endpoint accepts no idempotency key from the caller, and the client
+    surfaces no way to reissue a specific event. Recorded as a dedup affordance,
+    not as idempotency support — and deliberately NOT wired as a type:
+    Idempotency pointer.
+
+pagination:
+  applicable: false
+  note: Write-only ingestion endpoint; no collection reads are published.
+
+versioning:
+  api_versioning: none
+  path_versioned: false
+  header_versioned: false
+  sdk_versioning: semver, via the npm package
+  payload_version_field: pixel_version
+  payload_version_format: '"headless-<sdk-version>", e.g. headless-1.0.5'
+  sdk_type_field: sdk_type
+  sdk_type_value: '"headless" — distinguishes SDK events from Shopify Web Pixel events'
+  note: >-
+    The wire format is versioned only by the SDK build that produced it. There
+    is no server-side API version a consumer can pin.
+
+error_envelope:
+  published: false
+  observed: >-
+    GET /api/collect returns 200 {"status":"ok","service":"pixel-api"} as a
+    health response. No error shape is documented, and the SDK inspects only the
+    numeric status code — it never reads the response body.
+  client_behavior: >-
+    Non-2xx triggers the retry ladder; after exhaustion the event is dropped
+    without surfacing anything to the calling page.
+
+rate_limit_signaling:
+  headers: []
+  documented: false
+  note: >-
+    No X-RateLimit-*, RateLimit-* or Retry-After handling exists in the client.
+    A 429 from the collector would be treated as an ordinary retryable failure
+    on the fixed 1s/2s/3s ladder, ignoring any Retry-After the server sent.
+    See rate-limits/mai-rate-limits.yml.
+
+client_side_filtering:
+  bot_suppression:
+    enabled: true
+    mechanism: User-Agent regular expression evaluated in the browser
+    effect: Matching agents emit nothing; the call returns undefined.
+    matched_agents:
+      - Googlebot
+      - Bingbot
+      - Slurp
+      - DuckDuckBot
+      - Baiduspider
+      - YandexBot
+      - facebookexternalhit
+      - Facebot
+      - Twitterbot
+      - LinkedInBot
+      - Discordbot
+      - TelegramBot
+      - Slackbot
+      - WhatsApp
+      - AhrefsBot
+      - SEMrushBot
+      - MJ12bot
+      - DotBot
+      - PetalBot
+      - Bytespider
+      - UptimeRobot
+      - Pingdom
+      - GTmetrix
+      - HeadlessChrome
+      - PhantomJS
+      - Lighthouse
+      - PageSpeed
+      - 'generic substrings: bot, crawl, spider, scraper'
+    note: >-
+      HeadlessChrome and Lighthouse are suppressed, so synthetic monitoring and
+      performance audits will not generate events.
+
+state:
+  cookies:
+    - name: _mai_cid
+      purpose: anonymous client identifier (UUID v4)
+      max_age: 63072000
+      max_age_human: 2 years
+      path: /
+    - name: mai_utm
+      purpose: last-touch UTM attribution snapshot
+      max_age: 2592000
+      max_age_human: 30 days
+      format: URLSearchParams-encoded
+      note: Kept byte-compatible with MAI's Shopify Theme Extension.
+  attribution_precedence: URL utm_* parameters take precedence over the mai_utm cookie.
+
+command_queue:
+  supported: true
+  mechanism: >-
+    window.MaiPixel.q — commands invoked before initMaiPixel() are queued on an
+    array stub and replayed once the SDK initializes. This is what makes the
+    async script-tag snippet safe.
+
+return_values:
+  event_commands: the generated event_id (string)
+  getClientId: the _mai_cid value (string)
+  setCustomer_and_consent: undefined
+  suppressed: undefined (bot detected, consent withheld, or queued pre-init)
+
+cross_links:
+  authentication: authentication/mai-authentication.yml
+  data_model: data-model/mai-data-model.yml
+  json_schema: json-schema/mai-pixel-event.schema.json
+  rate_limits: rate-limits/mai-rate-limits.yml
+  lifecycle: lifecycle/mai-lifecycle.yml
+  packages: packages/mai-packages.yml

@@ -1,0 +1,104 @@
+generated: '2026-08-12'
+method: derived
+source: >-
+  npm registry release history for @mai-co/pixel, the shipped SDK bundle, and a
+  search of MAI's published surface for versioning, deprecation, SLA and status
+  pages
+docs: https://www.npmjs.com/package/@mai-co/pixel
+
+versioning:
+  api_versioning: none
+  detail: >-
+    The collection endpoint is unversioned — no path segment, no version header,
+    no media-type version. The only version on the wire is pixel_version, which
+    reports the SDK build that produced the event ("headless-1.0.5"), not a
+    contract a consumer can pin.
+  sdk_versioning:
+    scheme: semver
+    current_version: 1.0.5
+    released: '2026-05-07'
+    first_release: '2026-04-18'
+    release_count: 6
+    distribution_pinning: >-
+      MAI's documented script tag pins the MAJOR version only
+      (@mai-co/pixel@1), so embedded sites float across 1.x builds.
+
+releases:
+  - version: 1.0.5
+    date: '2026-05-07'
+  - version: 1.0.4
+    date: '2026-04-20'
+  - version: 1.0.3
+    date: '2026-04-20'
+  - version: 1.0.2
+    date: '2026-04-20'
+  - version: 1.0.1
+    date: '2026-04-20'
+  - version: 1.0.0
+    date: '2026-04-18'
+release_notes_published: false
+release_notes_note: >-
+  npm carries the versions and their dates but no changelog; there is no
+  CHANGELOG file in the published tarball and no dated release notes anywhere on
+  MAI's surface. The dates above are registry metadata, not a MAI changelog.
+
+deprecation:
+  policy_published: false
+  sunset_header: false
+  deprecation_header: false
+  rfc8594_support: false
+  deprecated_operations: []
+  note: >-
+    No deprecation policy, no Sunset or Deprecation header support, and no
+    notice period is published for either the SDK or the collection endpoint.
+    No `Deprecation` pointer is emitted.
+
+status_page:
+  published: false
+  url: null
+  note: >-
+    No status page was found on any MAI host or on the usual third-party
+    providers. status.mai.co does not resolve (NXDOMAIN). The nearest thing to a
+    health signal is the undocumented GET https://pixel.mai.co/api/collect, which
+    returns {"status":"ok","service":"pixel-api"} — a liveness probe, not a
+    status page. No `StatusPage` pointer is emitted.
+
+sla:
+  published: false
+  uptime_commitment: null
+  support_response_commitment: >-
+    "Dedicated client partner support" is listed as a MAI Plus benefit on the
+    Shopify listing, with no response-time commitment attached.
+
+support:
+  channel: Shopify App Store app support
+  url: https://apps.shopify.com/mai-marketing-ai-agents
+  email_published: false
+  note: >-
+    The Shopify listing routes support through Shopify. No developer support
+    email, forum, Slack or community is published.
+
+infrastructure_observations:
+  - host: pixel.mai.co
+    finding: Live. Google Frontend origin serving a Shopify embedded app plus the collector.
+    status: healthy
+  - host: api.mai.co
+    finding: >-
+      DNS resolves to Cloudflare but every path returns HTTP 526 — Cloudflare
+      cannot validate the origin certificate. The hostname is provisioned and
+      publicly broken; nothing is served from it. Either an abandoned or an
+      unfinished surface.
+    status: broken
+  - host: www.mai.co
+    finding: >-
+      Vercel bot mitigation returns HTTP 429 with x-vercel-mitigated: challenge
+      on every path, including /robots.txt. Automated clients — including
+      crawlers, agents, and this pipeline — cannot read the marketing site.
+    status: challenged
+
+gaps:
+  - No dated changelog or release notes.
+  - No deprecation policy or Sunset/Deprecation header support.
+  - No status page or uptime history.
+  - No published SLA.
+  - The collection endpoint is unversioned, so there is nothing for a consumer to pin.

@@ -1,0 +1,144 @@
+generated: '2026-08-12'
+method: derived
+source: >-
+  npm @mai-co/pixel@1.0.5 (README + dist/types.d.ts + shipped bundle),
+  https://apps.shopify.com/mai-marketing-ai-agents,
+  https://mai-unbound.secureframetrust.com/, and live host probes
+summary: >-
+  MAI conforms to Shopify's platform contracts — that is the standards surface it
+  actually has. It asserts no cross-cutting API standard: no OAuth/OIDC metadata,
+  no RFC 9457 problem details, no RFC 8594 sunset signaling, no RFC 9116
+  security.txt, and no named compliance certification is published. No
+  `Compliance` pointer is emitted, because no certification is publicly named.
+conforms_count: 3
+entries:
+
+  - id: shopify-web-pixels-api
+    name: Shopify Web Pixels / Customer Events
+    conforms: true
+    evidence: >-
+      MAI ships a Shopify Web Pixel plus a headless SDK whose event names and
+      flat event_params structure are explicitly "aligned with Web Pixel
+      event_params" (dist/types.d.ts). The event vocabulary — page_viewed,
+      product_viewed, product_added_to_cart, cart_viewed, search_submitted,
+      collection_viewed, checkout_started, checkout_completed — is Shopify's
+      standard customer-event set.
+    source: npm @mai-co/pixel@1.0.5 dist/types.d.ts
+
+  - id: shopify-customer-privacy-api
+    name: Shopify Customer Privacy API (consent model)
+    conforms: true
+    evidence: >-
+      ConsentData mirrors the Shopify CustomerPrivacy four-flag model exactly —
+      analytics_processing_allowed, marketing_allowed,
+      preferences_processing_allowed, sale_of_data_allowed — and the SDK halts
+      all sends when analytics_processing_allowed is false. Documented in the
+      README under "Managing Tracking Consent".
+    source: npm @mai-co/pixel@1.0.5 README + dist/types.d.ts
+    caveat: >-
+      The SDK's default is tracking ALLOWED when consent() is never called, and
+      enforcement is client-side only. Merchants in consent-required
+      jurisdictions must gate it themselves.
+
+  - id: shopify-app-store
+    name: Shopify App Store partner requirements
+    conforms: true
+    evidence: >-
+      MAI publishes a live Shopify App Store listing ("MAI: Insights &
+      Attribution") with tiered pricing and a linked privacy policy, which
+      requires passing Shopify's app review.
+    source: https://apps.shopify.com/mai-marketing-ai-agents
+
+  - id: oauth2
+    name: OAuth 2.0
+    conforms: false
+    evidence: >-
+      The public collection endpoint is unauthenticated. No
+      /.well-known/oauth-authorization-server or
+      /.well-known/oauth-protected-resource is served on any MAI host (404 on
+      pixel.mai.co). MAI's Shopify app necessarily uses Shopify's own OAuth, but
+      MAI publishes no OAuth surface of its own.
+
+  - id: oidc
+    name: OpenID Connect
+    conforms: false
+    evidence: /.well-known/openid-configuration returns 404 on pixel.mai.co; absent elsewhere.
+
+  - id: rfc9457
+    name: RFC 9457 Problem Details for HTTP APIs
+    conforms: false
+    evidence: >-
+      No error envelope is published, no application/problem+json is produced,
+      and the SDK never reads a response body — it branches on the numeric
+      status code alone.
+
+  - id: rfc8594
+    name: RFC 8594 Sunset header / deprecation signaling
+    conforms: false
+    evidence: No Sunset or Deprecation header support and no deprecation policy is published.
+
+  - id: rfc9116
+    name: RFC 9116 security.txt
+    conforms: false
+    evidence: >-
+      /.well-known/security.txt returns 404 on pixel.mai.co. On www.mai.co the
+      path could not be read at all — Vercel bot mitigation answers 429 — so
+      that host is recorded as unread rather than absent.
+
+  - id: idempotency
+    name: Idempotent request semantics
+    conforms: false
+    evidence: >-
+      No idempotency key is accepted. Events carry a client-minted UUID v4
+      event_id and a monotonic seq that would let the server de-duplicate the
+      SDK's 3-attempt retry, but MAI publishes no statement that a replayed
+      event_id is collapsed rather than double-counted.
+
+  - id: pagination
+    name: Pagination conventions
+    conforms: false
+    not_applicable: true
+    evidence: Write-only ingestion endpoint; no collection reads are published.
+
+  - id: openapi
+    name: OpenAPI
+    conforms: false
+    evidence: >-
+      No OpenAPI or Swagger document is served on any MAI host. Probed
+      /openapi.json, /openapi.yaml, /swagger.json, /v1/openapi.json, /api-docs,
+      /docs and /redoc on pixel.mai.co (all 404), on api.mai.co (all 526,
+      Cloudflare origin TLS failure), and on www.mai.co (all 429, bot challenge).
+      The nearest machine-readable contract MAI publishes is the TypeScript
+      declaration set inside the npm package.
+
+  - id: asyncapi
+    name: AsyncAPI
+    conforms: false
+    evidence: >-
+      No AsyncAPI document is published. MAI does have a real event vocabulary,
+      but it is browser-to-server ingestion, not a subscribable event stream or
+      an outbound webhook surface, so no AsyncAPI or Webhooks pointer is emitted.
+
+compliance:
+  named_certifications: []
+  trust_center:
+    platform: Secureframe Trust
+    url: https://mai-unbound.secureframetrust.com/
+    note: >-
+      A trust center exists and advertises continuous control monitoring, but the
+      public landing view names no certification (no SOC 2, ISO 27001, PCI,
+      HIPAA or FedRAMP) without an access request. Nothing is asserted here, and
+      no `Compliance` pointer is emitted. See security/mai-trust-center.yml.
+  privacy_policy: https://mai.co/privacy-policy
+  data_residency_published: false
+  subprocessors_published: false
+  warehouse_disclosed: >-
+    BigQuery — disclosed in MAI's own published TypeScript declarations, which
+    state that extra event_params keys land in a BigQuery REPEATED RECORD.
+
+cross_links:
+  authentication: authentication/mai-authentication.yml
+  conventions: conventions/mai-conventions.yml
+  trust_center: security/mai-trust-center.yml
+  domain_security: security/mai-domain-security.yml
+  well_known: well-known/mai-well-known.yml

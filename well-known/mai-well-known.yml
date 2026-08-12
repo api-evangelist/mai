@@ -1,0 +1,129 @@
+generated: '2026-08-12'
+method: probed
+source: live HTTP probes of every MAI host known to this profile
+summary: >-
+  No /.well-known/ document is served on any MAI host. Every path on the API
+  host (pixel.mai.co) returns a genuine 404. Every path on the marketing host
+  (www.mai.co) is intercepted by a Vercel bot-mitigation challenge that answers
+  429 with an HTML challenge body, so those paths could not be read at all —
+  they are recorded as unread, NOT as absent. No WellKnown or SecurityTxt
+  pointer is emitted from this probe, because nothing returned a document.
+hit_count: 0
+hosts:
+  - host: pixel.mai.co
+    role: api
+    reachable: true
+    note: >-
+      Google Frontend origin. Serves a Shopify embedded app at / and the live
+      collection endpoint at /api/collect. All /.well-known/ paths genuinely 404.
+    probes:
+      - path: /.well-known/security.txt
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/openid-configuration
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/oauth-authorization-server
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/oauth-protected-resource
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/api-catalog
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/ai-plugin.json
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/agent-card.json
+        status: 404
+        result: miss
+        file: null
+      - path: /.well-known/agent.json
+        status: 404
+        result: miss
+        file: null
+      - path: /llms.txt
+        status: 404
+        result: miss
+        file: null
+      - path: /robots.txt
+        status: 404
+        result: miss
+        file: null
+
+  - host: www.mai.co
+    role: marketing
+    reachable: false
+    note: >-
+      Vercel bot mitigation. Every path — including static ones — answers
+      HTTP 429 with `x-vercel-mitigated: challenge` and a ~33KB HTML challenge
+      document. These are UNREAD, not confirmed absent.
+    probes:
+      - path: /.well-known/security.txt
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /.well-known/openid-configuration
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /.well-known/oauth-authorization-server
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /.well-known/api-catalog
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /.well-known/ai-plugin.json
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /.well-known/agent-card.json
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /.well-known/agent.json
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /llms.txt
+        status: 429
+        result: unread-bot-challenge
+        file: null
+      - path: /robots.txt
+        status: 429
+        result: unread-bot-challenge
+        file: null
+
+  - host: api.mai.co
+    role: unresolved
+    reachable: false
+    note: >-
+      Resolves to Cloudflare (104.21.93.241, 172.67.216.223) but every path
+      returns HTTP 526 — Cloudflare cannot validate the origin TLS certificate.
+      The hostname is provisioned; nothing is publicly served from it.
+    probes:
+      - path: /
+        status: 526
+        result: origin-tls-failure
+        file: null
+      - path: /.well-known/agent-card.json
+        status: 526
+        result: origin-tls-failure
+        file: null
+      - path: /.well-known/agent.json
+        status: 526
+        result: origin-tls-failure
+        file: null
+      - path: /openapi.json
+        status: 526
+        result: origin-tls-failure
+        file: null

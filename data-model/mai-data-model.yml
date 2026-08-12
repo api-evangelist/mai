@@ -1,0 +1,191 @@
+generated: '2026-08-12'
+method: derived
+source: >-
+  json-schema/mai-pixel-event.schema.json, itself transcribed from
+  npm @mai-co/pixel@1.0.5 dist/types.d.ts
+docs: https://www.npmjs.com/package/@mai-co/pixel
+summary: >-
+  MAI's only publicly described data model is the event envelope its Pixel SDK
+  posts to https://pixel.mai.co/api/collect. It is a single denormalized
+  document — no resource collections, no ids that address a retrievable
+  entity, no reads. Every relationship below is composition inside one payload,
+  not a link between addressable resources.
+shape: event-envelope
+addressable_resources: false
+
+entities:
+  - name: EventPayload
+    root: true
+    description: The complete document posted per tracked interaction.
+    identifier: event_id
+    identifier_format: UUID v4, minted client-side per event
+    ordering: seq (monotonic within session)
+    fields_required:
+      - event_id
+      - event_name
+      - event_timestamp
+      - seq
+      - client_id
+      - customer
+      - shop
+      - page
+      - traffic
+      - event_params
+      - consent
+      - pixel_version
+      - sdk_type
+
+  - name: CustomerData
+    description: >-
+      Named identity for the visitor. Null until the merchant calls setCustomer.
+      email is the join key MAI uses to stitch browse-stage UTM to checkout-stage
+      orders.
+    identifier: email (functional), id (merchant-supplied, optional)
+    pii: true
+
+  - name: Shop
+    description: Tenant context, supplied by the embedding site as configuration.
+    identifier: myshopifyDomain
+    identifier_format: '<store>.myshopify.com'
+    note: Identifies the tenant but does not authenticate it.
+
+  - name: Page
+    description: Browser page context captured at emit time (href, title, referrer).
+    identifier: null
+
+  - name: Traffic
+    description: >-
+      Last-touch UTM snapshot (source, medium, campaign, content, term). Read
+      from the URL if present, otherwise from the mai_utm cookie.
+    identifier: null
+    retention: 30 days (mai_utm cookie max-age)
+
+  - name: ItemData
+    description: Line item appearing in cart, checkout, search and collection events.
+    identifier: item_id
+    identifier_format: Shopify Product ID, commonly the gid://shopify/Product/<n> form
+    variant_identifier: item_variant / product_variant_id (gid://shopify/ProductVariant/<n>)
+
+  - name: ConsentData
+    description: >-
+      Four-flag privacy state aligned with the Shopify CustomerPrivacy API.
+      Snapshotted onto every event.
+    identifier: null
+
+  - name: Order
+    description: >-
+      Referenced only by identifier on checkout events; MAI publishes no order
+      resource of its own.
+    identifier: order_id
+    external: true
+
+  - name: Checkout
+    description: Referenced only by its session token on checkout events.
+    identifier: token
+    external: true
+
+relationships:
+  - from: EventPayload
+    to: CustomerData
+    type: has_one
+    via: customer
+    nullable: true
+  - from: EventPayload
+    to: Shop
+    type: has_one
+    via: shop
+  - from: EventPayload
+    to: Page
+    type: has_one
+    via: page
+  - from: EventPayload
+    to: Traffic
+    type: has_one
+    via: traffic
+  - from: EventPayload
+    to: ConsentData
+    type: has_one
+    via: consent
+  - from: EventPayload
+    to: ItemData
+    type: has_many
+    via: items
+    applies_to:
+      - cart_viewed
+      - search_submitted
+      - collection_viewed
+      - checkout_started
+      - checkout_completed
+  - from: EventPayload
+    to: Order
+    type: belongs_to
+    via: event_params.order_id
+    applies_to: [checkout_started, checkout_completed]
+    note: Required on checkout_completed, optional on checkout_started.
+  - from: EventPayload
+    to: Checkout
+    type: belongs_to
+    via: event_params.token
+    applies_to: [checkout_started, checkout_completed]
+  - from: ItemData
+    to: Shop
+    type: belongs_to
+    via: implied by shop.myshopifyDomain on the parent event
+
+identifier_conventions:
+  - domain: MAI
+    field: event_id
+    format: UUID v4
+  - domain: MAI
+    field: client_id
+    format: UUID v4, cookie-persisted (_mai_cid), 2-year max-age
+  - domain: Shopify
+    field: product_id / product_variant_id / cart_id
+    format: 'Shopify GID, e.g. gid://shopify/Product/1234567'
+    note: >-
+      MAI mints no identifiers of its own for commerce objects. Every product,
+      variant, cart and order id in the payload is Shopify's, which makes the
+      data model a projection of Shopify's rather than an independent one.
+
+events:
+  count: 10
+  required_integration:
+    - setCustomer
+    - page_viewed
+  catalog:
+    - name: page_viewed
+      params_schema: null
+      note: Auto-fired once at init; SPAs must re-fire on route change.
+    - name: product_viewed
+      params_schema: '#/$defs/ProductViewedParams'
+    - name: product_added_to_cart
+      params_schema: '#/$defs/ProductAddedToCartParams'
+    - name: product_removed_from_cart
+      params_schema: '#/$defs/ProductRemovedFromCartParams'
+    - name: cart_viewed
+      params_schema: '#/$defs/CartViewedParams'
+    - name: search_submitted
+      params_schema: '#/$defs/SearchSubmittedParams'
+    - name: collection_viewed
+      params_schema: '#/$defs/CollectionViewedParams'
+    - name: checkout_started
+      params_schema: '#/$defs/CheckoutParams'
+      note: Only for custom checkouts; Shopify-hosted checkout is covered by the MAI Web Pixel.
+    - name: checkout_completed
+      params_schema: '#/$defs/CheckoutCompletedParams'
+      note: Only for custom checkouts. order_id required.
+    - name: _customer_attributes_changed
+      params_schema: null
+      note: Internal event carrying attribute_change; emitted on consent changes.
+
+downstream:
+  warehouse: BigQuery
+  evidence: >-
+    types.d.ts states that extra event_params keys are stored in the BigQuery
+    "event_params REPEATED RECORD alongside the known fields" — MAI's own
+    published description of where the data lands.
+
+gaps:
+  - No read API, so no entity is retrievable by identifier.
+  - No OpenAPI or JSON Schema published by MAI for this model.
+  - No documented schema-evolution or field-deprecation policy.
