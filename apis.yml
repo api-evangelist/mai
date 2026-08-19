@@ -31,7 +31,7 @@ accessModel:
     the Pixel collection endpoint itself is unauthenticated but is not offered as
     a general-purpose developer API. See plans/mai-plans-pricing.yml.
 image: https://xqxhyvqndlcdmf5c.public.blob.vercel-storage.com/assets/images/website-preview.png
-specificationVersion: '0.20'
+specificationVersion: '0.23'
 created: '2026-07-17'
 modified: '2026-08-12'
 tags:
