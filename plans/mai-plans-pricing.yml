@@ -80,3 +80,23 @@ evidence:
     status: 429
     fetched: '2026-08-12'
     note: Vercel bot-mitigation challenge; page not readable.
+x-canonical:
+  generated: '2026-10-08'
+  vocabulary: all/0-working/economics/plans-canonical.yml
+  models:
+  - free
+  - hybrid
+  units: []
+  plans:
+  - name: MAI
+    access: other
+    model: free
+    model_how: derived
+    units: []
+    periods: []
+  - name: MAI Plus
+    access: other
+    model: hybrid
+    model_how: derived
+    units: []
+    periods: []
